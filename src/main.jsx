@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { Component, StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
@@ -9,6 +9,15 @@ const blank = { accounts: [], flow: [], goals: [] };
 const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 const amount = (n) => money.format(Number(n) || 0);
 const sum = (items) => items.reduce((total, item) => total + (Number(item.amount) || 0), 0);
+
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (this.state.failed) return <Screen><p className="eyebrow">PAISAPATH</p><h1>Your dashboard needs a refresh.</h1><p className="lead">Please reload this page. Your private Firestore data has not been changed.</p><button className="primary" onClick={() => window.location.reload()}>Reload PaisaPath</button></Screen>;
+    return this.props.children;
+  }
+}
 
 function App() {
   const [user, setUser] = useState(); const [data, setData] = useState(blank); const [busy, setBusy] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
@@ -31,4 +40,4 @@ function Empty({ label }) { return <p className="empty">{label}</p>; }
 function Goal({ goal }) { const progress = goal.amount ? Math.min(100, (Number(goal.current) || 0) / Number(goal.amount) * 100) : 0; return <div className="goal"><div><b>{goal.name}</b><small>{goal.note || 'No note added'}</small></div><strong>{amount(goal.current)} <small>of {amount(goal.amount)}</small></strong><div className="progress"><i style={{ width: `${progress}%` }} /></div><span>{Math.round(progress)}% complete</span></div>; }
 function DataSection({ title, subtitle, items, kind, add, edit, remove }) { return <section className="panel data"><div className="section-title"><div><p className="eyebrow">PAISAPATH</p><h2>{title}</h2><p className="subtitle">{subtitle}</p></div><button className="outline" onClick={add}>+ Add</button></div>{items.length ? <div className="list">{items.map((item) => <article key={item.id}><div><b>{item.name}</b><small>{item.type}</small>{kind === 'goals' && <small>{item.note}</small>}</div><strong>{kind === 'goals' ? amount(item.current) : amount(item.amount)}</strong><button onClick={() => edit(item)}>Edit</button><button className="remove" onClick={() => remove(item.id)}>Remove</button></article>)}</div> : <Empty label="Nothing here yet. Add your first entry." />}</section>; }
 function Editor({ kind, entry, close, save }) { const [form, setForm] = useState(entry || { id: crypto.randomUUID(), name: '', type: kind === 'accounts' ? 'Savings' : kind === 'flow' ? 'Income' : 'Goal', amount: '', current: '', note: '' }); const goal = kind === 'goals'; const update = (key, value) => setForm({ ...form, [key]: value }); return <div className="modal-backdrop" onMouseDown={close}><form className="modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={(event) => { event.preventDefault(); save({ ...form, amount: Number(form.amount) || 0, current: Number(form.current) || 0 }); }}><button className="close" type="button" onClick={close}>×</button><p className="eyebrow">{entry ? 'EDIT' : 'NEW'} {kind.slice(0, -1)}</p><h2>{entry ? 'Update this entry' : 'Add an entry'}</h2><label>Name<input required value={form.name} onChange={(event) => update('name', event.target.value)} /></label><label>Category<input required value={form.type} onChange={(event) => update('type', event.target.value)} /></label>{goal ? <><label>Goal amount<input required type="number" min="0" value={form.amount} onChange={(event) => update('amount', event.target.value)} /></label><label>Already saved<input type="number" min="0" value={form.current} onChange={(event) => update('current', event.target.value)} /></label><label>Note<input value={form.note} onChange={(event) => update('note', event.target.value)} /></label></> : <label>Amount<input required type="number" min="0" step="0.01" value={form.amount} onChange={(event) => update('amount', event.target.value)} /></label>}<button className="primary" type="submit">Save securely</button></form></div>; }
-createRoot(document.getElementById('root')).render(<StrictMode><App /></StrictMode>);
+createRoot(document.getElementById('root')).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>);
