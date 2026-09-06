@@ -12,10 +12,15 @@
         <section>
           <p style="letter-spacing:.15em;color:#d56640;font-size:11px">PAISAPATH</p>
           <h1 style="font-family:Georgia,serif;font-size:42px;margin:12px 0">Loading your private space…</h1>
-          <p style="color:#65766f">Starting your secure dashboard.</p>
+          <p id="boot-status" style="color:#65766f">Starting your secure dashboard.</p>
         </section>
       </main>
     </div>
+    <script>
+      const bootStatus = document.getElementById('boot-status');
+      window.addEventListener('error', (event) => { bootStatus.textContent = `Startup issue: ${event.message}`; });
+      window.addEventListener('unhandledrejection', (event) => { bootStatus.textContent = `Startup issue: ${event.reason?.message || 'Unable to start the secure app.'}`; });
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
