@@ -1,0 +1,21 @@
+:root {
+  --ink: #25213d;
+  --cream: #f7f6ff;
+  --paper: #ffffff;
+  --sand: #ece9fb;
+  --sage: #e5e0f5;
+  --orange: #7563b5;
+  --muted: #6d6981;
+  --line: #25213d1c;
+}
+
+nav { background: #e9e6f7; }
+nav button.active { box-shadow: 0 2px 10px #25213d12; }
+.account-menu { box-shadow: 0 16px 36px #25213d22; }
+.group > div, .progress { background: #ddd9ee; }
+.row .in { color: #4f7a73; }
+.metrics .dark p, .metrics .dark small { color: #d4ceed; }
+.orb.one { background: #dcd5f2; }
+.orb.two { background: #c8c0e8; }
+.modal-backdrop { background: #17132999; }
+.modal input { background: #fbfaff; }
