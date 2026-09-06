@@ -21,7 +21,21 @@ class ErrorBoundary extends Component {
 
 function App() {
   const [user, setUser] = useState(); const [data, setData] = useState(blank); const [busy, setBusy] = useState(true); const [saving, setSaving] = useState(false); const [error, setError] = useState('');
-  useEffect(() => onAuthStateChanged(auth, async (nextUser) => { setUser(nextUser); setError(''); if (!nextUser) { setBusy(false); return; } try { const saved = await getDoc(doc(database, 'users', nextUser.uid, 'private', 'dashboard')); setData(saved.exists() ? { ...blank, ...saved.data() } : blank); } catch { setError('Your dashboard could not be loaded. Please try again.'); } finally { setBusy(false); } }), []);
+  useEffect(() => {
+    // Some privacy-focused browsers delay Firebase's saved-session check. Never leave the page loading forever.
+    const fallback = window.setTimeout(() => setBusy(false), 3500);
+    const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+      window.clearTimeout(fallback);
+      setUser(nextUser); setError('');
+      if (!nextUser) { setBusy(false); return; }
+      try {
+        const saved = await getDoc(doc(database, 'users', nextUser.uid, 'private', 'dashboard'));
+        setData(saved.exists() ? { ...blank, ...saved.data() } : blank);
+      } catch { setError('Your dashboard could not be loaded. Please try again.'); }
+      finally { setBusy(false); }
+    });
+    return () => { window.clearTimeout(fallback); unsubscribe(); };
+  }, []);
   const save = async (next) => { setData(next); setSaving(true); setError(''); try { await setDoc(doc(database, 'users', user.uid, 'private', 'dashboard'), { ...next, updatedAt: serverTimestamp() }); } catch { setError('Could not save that change. Please try again.'); } finally { setSaving(false); } };
   if (busy) return <Screen><p className="eyebrow">PAISAPATH</p><h1>Loading your private space…</h1></Screen>;
   if (!user) return <SignIn error={error} />;
